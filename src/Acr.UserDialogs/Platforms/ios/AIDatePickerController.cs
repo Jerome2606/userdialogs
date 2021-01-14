@@ -284,6 +284,12 @@ namespace AI
         private void SetTheme()
         {
             this.BackgroundColor = GetBackgroundColor();
+#if __IOS__
+            if (UIDevice.CurrentDevice.CheckSystemVersion(13, 0))
+            {
+                this.BackgroundColor = this.TraitCollection.UserInterfaceStyle == UIUserInterfaceStyle.Dark ? UIColor.Black : UIColor.TertiarySystemBackgroundColor;
+            }
+#endif
         }
 
         private UIColor GetBackgroundColor()

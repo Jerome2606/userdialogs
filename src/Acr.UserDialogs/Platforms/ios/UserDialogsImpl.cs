@@ -52,6 +52,7 @@ namespace Acr.UserDialogs
             {
 #if __IOS__
                 Mode = UIDatePickerMode.Date,
+                PickerStyle = GetPickerStyle(config),
 #endif
                 SelectedDateTime = config.SelectedDate ?? DateTime.Now,
                 OkText = config.OkText,
@@ -75,6 +76,7 @@ namespace Acr.UserDialogs
             {
 #if __IOS__
                 Mode = UIDatePickerMode.Time,
+                PickerStyle = GetPickerStyle(config),
 #endif
                 SelectedDateTime = config.SelectedTime != null ? DateTime.Today.Add ((TimeSpan)config.SelectedTime) : DateTime.Now,
                 MinuteInterval = config.MinuteInterval,
@@ -331,6 +333,18 @@ namespace Acr.UserDialogs
                     txt.KeyboardType = UIKeyboardType.Url;
                     break;
             }
+        }
+
+        protected iOSPickerStyle GetPickerStyle(IiOSStyleDialogConfig config)
+        {
+            //var iOSConfig = (config as IiOSStyleDialogConfig);
+            if (config == null)
+                return iOSPickerStyle.Auto;
+
+            if (!config.iOSPickerStyle.HasValue)
+                return iOSPickerStyle.Auto;
+
+            return config.iOSPickerStyle.Value;
         }
 
         #endregion

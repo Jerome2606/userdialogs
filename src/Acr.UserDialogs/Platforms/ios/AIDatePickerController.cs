@@ -14,7 +14,8 @@ namespace AI
 #if __IOS__
 		public UIDatePickerMode Mode { get; set; } = UIDatePickerMode.Date;
 #endif
-        public UIColor BackgroundColor { get; set; }
+		public iOSPickerStyle PickerStyle { get; set; }
+		public UIColor BackgroundColor { get; set; }
         public DateTime SelectedDateTime { get; set; } = DateTime.Now;
         public DateTime? MaximumDateTime { get; set; }
         public DateTime? MinimumDateTime { get; set; }
@@ -33,13 +34,7 @@ namespace AI
 
         public AIDatePickerController()
         {
-#if __IOS__
-            this.BackgroundColor = (UIDevice.CurrentDevice.CheckSystemVersion(13, 0))
-                ? UIColor.TertiarySystemBackgroundColor
-                : UIColor.White;
-#else
-            this.BackgroundColor = UIColor.White;
-#endif
+            SetTheme();
             //this.ModalPresentationStyle = UIModalPresentationStyle.Custom;
             this.ModalPresentationStyle = UIModalPresentationStyle.OverCurrentContext;
             this.TransitioningDelegate = this;
@@ -56,12 +51,15 @@ namespace AI
 #if __IOS__
 			var datePicker = new UIDatePicker
 			{
-                TranslatesAutoresizingMaskIntoConstraints = false,
-                Date = this.SelectedDateTime.ToNSDate(),
-                BackgroundColor = BackgroundColor,
-                Mode = Mode,
+				TranslatesAutoresizingMaskIntoConstraints = false,
+				Date = this.SelectedDateTime.ToNSDate(),
+				BackgroundColor = BackgroundColor,
+				Mode = Mode,
                 MinuteInterval = MinuteInterval
 			};
+
+			SetPreferredDatePickerStyle(ref datePicker,PickerStyle);
+
             if (Use24HourClock == true)
                 datePicker.Locale = NSLocale.FromLocaleIdentifier("NL");
 
@@ -269,6 +267,76 @@ namespace AI
 		{
 			return this;
 		}
+
+        public override void TraitCollectionDidChange(UITraitCollection previousTraitCollection)
+        {
+            base.TraitCollectionDidChange(previousTraitCollection);
+
+            if (UIDevice.CurrentDevice.CheckSystemVersion(12, 0) && previousTraitCollection != null)
+            {
+                if (this.TraitCollection.UserInterfaceStyle != previousTraitCollection.UserInterfaceStyle)
+                {
+                    SetTheme();
+                }
+            }
+        }
+
+        private void SetTheme()
+        {
+            this.BackgroundColor = GetBackgroundColor();
+        }
+
+        private UIColor GetBackgroundColor()
+        {
+            if (UIDevice.CurrentDevice.CheckSystemVersion(12, 0))
+            {
+                if (this.TraitCollection.UserInterfaceStyle == UIUserInterfaceStyle.Dark)
+                {
+                    return UIColor.Black;
+                }
+#if __IOS__
+                else if (UIDevice.CurrentDevice.CheckSystemVersion(13, 0))
+                {
+                    return UIColor.TertiarySystemBackgroundColor;
+                }
+#endif
+                else
+                {
+                    return UIColor.White;
+                }
+            }
+            else
+            {
+                return UIColor.White;
+            }
+        }
+
+#if __IOS__
+		private void SetPreferredDatePickerStyle(ref UIDatePicker datePicker, iOSPickerStyle? style)
+        {
+			if (!UIDevice.CurrentDevice.CheckSystemVersion(13, 4) ||
+				datePicker == null ||
+				!style.HasValue)
+			{
+				return;
+			}
+
+			if (UIDevice.CurrentDevice.CheckSystemVersion(14, 0) && style.Value == iOSPickerStyle.Compact)
+			{
+				datePicker.PreferredDatePickerStyle = UIDatePickerStyle.Compact;
+				return;
+			}
+
+			switch (style.Value)
+            {
+				case iOSPickerStyle.Auto: datePicker.PreferredDatePickerStyle = UIDatePickerStyle.Automatic; return;
+				case iOSPickerStyle.Inline: datePicker.PreferredDatePickerStyle = UIDatePickerStyle.Inline; return;
+				case iOSPickerStyle.Wheels: datePicker.PreferredDatePickerStyle = UIDatePickerStyle.Wheels; return;
+			}
+
+			datePicker.PreferredDatePickerStyle = UIDatePickerStyle.Automatic;
+		}
+#endif
 	}
 }
 
